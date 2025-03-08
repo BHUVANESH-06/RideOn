@@ -26,6 +26,7 @@ interface InputFieldProps {
   className?: string;
   value: string;
   onChangeText: (text: string) => void;
+  keyboardType?: "default" | "numeric" | "email-address" | "phone-pad"; // Added this
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -40,6 +41,7 @@ const InputField: React.FC<InputFieldProps> = ({
   className,
   value,
   onChangeText,
+  keyboardType = "default", 
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -57,6 +59,7 @@ const InputField: React.FC<InputFieldProps> = ({
               secureTextEntry={secureTextEntry}
               value={value}
               onChangeText={onChangeText}
+              keyboardType={keyboardType}
               {...props}
             />
           </View>
@@ -80,8 +83,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F5F7FA",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
     borderRadius: 50,
     paddingVertical: 5,
     paddingHorizontal: 10,

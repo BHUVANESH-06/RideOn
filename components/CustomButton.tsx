@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, ButtonProps } from "react-native";
+import { TouchableOpacity, Image,Text, StyleSheet, ButtonProps } from "react-native";
 
 const COLORS = {
   primary: "#028FFF",  
@@ -19,10 +19,10 @@ const TEXT_COLORS = {
 interface CustomButtonProps extends ButtonProps {
   bgVariant?: "primary" | "secondary" | "danger" | "outline" | "success";
   textVariant?: "primary" | "default" | "secondary" | "danger" | "success";
-  IconLeft?: React.ComponentType<any>;
-  IconRight?: React.ComponentType<any>;
-  style?: any; // Allow external button styles
-  textStyle?: any; // Allow external text styles
+  IconLeft?: any;
+  IconRight?: any;
+  style?: any; 
+  textStyle?: any;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -50,7 +50,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       ])}
       {...props}
     >
-      {IconLeft && <IconLeft style={styles.icon} />}
+      {IconLeft && <Image source={IconLeft} style={styles.icon} />}
       <Text style={StyleSheet.flatten([
         styles.text, 
         { color: TEXT_COLORS[textVariant] || TEXT_COLORS.default },
@@ -69,16 +69,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
-    
     borderRadius: 60,
     width:400,
   },
   text: {
     fontSize: 18,
-    fontWeight: "bold",
   },
   icon: {
-    marginHorizontal: 5,
+    marginRight:10,
+    width:20,
+    height:20
   },
 });
 

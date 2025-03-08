@@ -6,7 +6,7 @@ import React from "react";
 const Profile = () => {
     return (
         <SafeAreaView>
-            <Text>Profile</Text>
+            <Text>My Profile</Text>
         </SafeAreaView>
     );
 };
