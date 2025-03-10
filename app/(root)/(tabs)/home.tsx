@@ -124,6 +124,7 @@ const recentRides = [
   },
 ];
 export default function Home() {
+
   const {setUserLocation,setDestinationLocation} = useLocationStore();
   const [hasPermissions,setHasPermissions] = useState(false);
 
@@ -135,6 +136,7 @@ export default function Home() {
         return;
       }
       let location = await Location.getCurrentPositionAsync();
+      
       const address = await Location.reverseGeocodeAsync({
         latitude:location.coords?.latitude!,
         longitude:location.coords?.longitude!,
@@ -142,7 +144,7 @@ export default function Home() {
       setUserLocation({
         latitude:location.coords.latitude,
         longitude:location.coords.longitude,
-        address:`${address[0].name}, ${address[0].region}`
+        address:`${address[0].formattedAddress}, ${address[0].region}`
       })
     }
     requestLocation()
@@ -152,13 +154,20 @@ export default function Home() {
   const { session } = useSession();
   const router = useRouter();
   const loading = true;
+
   const handleSignOut = async () => {
     if (session) {
       await session.end();
       router.replace("/(auth)/sign-in");
     }
   };
-  const handleDestinationPress = () => {};
+  const handleDestinationPress = (location:{latitude: number;
+    longitude: number;
+    address: string;}) => {
+    console.log(location)
+    setDestinationLocation(location);
+    router.push("/(root)/find-ride");
+  };
   return (
     <SafeAreaView>
       <FlatList
