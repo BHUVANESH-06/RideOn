@@ -32,7 +32,7 @@ const DriverCard = ({ item, selected, setSelected }: DriverCardProps) => {
           </View>
 
           <Text style={styles.separator}>|</Text>
-          <Text style={styles.infoText}>{formatTime(item.time!)}</Text>
+          <Text style={styles.infoText}>{formatTime(parseInt(`${item.time!}`) || 5)}</Text>
           <Text style={styles.separator}>|</Text>
           <Text style={styles.infoText}>{item.car_seats} seats</Text>
         </View>
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   selected: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#ffebee",
   },
   unselected: {
     backgroundColor: "#FFFFFF",

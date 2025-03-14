@@ -16,6 +16,7 @@ export const generateMarkersFromData = ({
         const lngOffset = (Math.random() - 0.5) * 0.01; // Random offset between -0.005 and 0.005
 
         return {
+            id: driver.driver_id,
             latitude: userLatitude + latOffset,
             longitude: userLongitude + lngOffset,
             title: `${driver.first_name} ${driver.last_name}`,
@@ -73,49 +74,69 @@ export const calculateRegion = ({
 };
 
 export const calculateDriverTimes = async ({
-                                               markers,
-                                               userLatitude,
-                                               userLongitude,
-                                               destinationLatitude,
-                                               destinationLongitude,
-                                           }: {
+    markers,
+    userLatitude,
+    userLongitude,
+    destinationLatitude,
+    destinationLongitude,
+}: {
     markers: MarkerData[];
     userLatitude: number | null;
     userLongitude: number | null;
     destinationLatitude: number | null;
     destinationLongitude: number | null;
 }) => {
-    if (
-        !userLatitude ||
-        !userLongitude ||
-        !destinationLatitude ||
-        !destinationLongitude
-    )
-        return;
+    if (!userLatitude || !userLongitude || !destinationLatitude || !destinationLongitude) return;
 
     try {
         const timesPromises = markers.map(async (marker) => {
             const responseToUser = await fetch(
-                `https://maps.googleapis.com/maps/api/directions/json?origin=${marker.latitude},${marker.longitude}&destination=${userLatitude},${userLongitude}&key=${directionsAPI}`,
+                `https://routes.googleapis.com/directions/v2:computeRoutes`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Goog-Api-Key": directionsAPI,
+                        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
+                    },
+                    body: JSON.stringify({
+                        origin: { location: { latLng: { latitude: marker.latitude, longitude: marker.longitude } } },
+                        destination: { location: { latLng: { latitude: userLatitude, longitude: userLongitude } } },
+                        travelMode: "DRIVE",
+                    }),
+                }
             );
             const dataToUser = await responseToUser.json();
-            const timeToUser = dataToUser.routes[0].legs[0].duration.value; // Time in seconds
+            const timeToUser = dataToUser.routes[0]?.duration.replace("s", "") || "0"; // Extract time in seconds
 
             const responseToDestination = await fetch(
-                `https://maps.googleapis.com/maps/api/directions/json?origin=${userLatitude},${userLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`,
+                `https://routes.googleapis.com/directions/v2:computeRoutes`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Goog-Api-Key": directionsAPI,
+                        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
+                    },
+                    body: JSON.stringify({
+                        origin: { location: { latLng: { latitude: userLatitude, longitude: userLongitude } } },
+                        destination: { location: { latLng: { latitude: destinationLatitude, longitude: destinationLongitude } } },
+                        travelMode: "DRIVE",
+                    }),
+                }
             );
             const dataToDestination = await responseToDestination.json();
-            const timeToDestination =
-                dataToDestination.routes[0].legs[0].duration.value; // Time in seconds
+            const timeToDestination = dataToDestination.routes[0]?.duration.replace("s", "") || "0"; // Extract time in seconds
 
-            const totalTime = (timeToUser + timeToDestination) / 60; // Total time in minutes
+            const totalTime = (parseInt(timeToUser) + parseInt(timeToDestination)) / 60; // Convert to minutes
             const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
 
-            return {...marker, time: totalTime, price};
+            return { ...marker, time: totalTime, price };
         });
 
         return await Promise.all(timesPromises);
     } catch (error) {
         console.error("Error calculating driver times:", error);
+        return [];
     }
 };
