@@ -4,10 +4,16 @@ import { calculateDriverTimes, calculateRegion, generateMarkersFromData } from "
 import { useDriverStore, useLocationStore } from "@/store"
 import { Driver, MarkerData } from "@/types/type";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native"
-import MapView,{Marker, PROVIDER_DEFAULT} from "react-native-maps"
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native"
+import {Marker, PROVIDER_DEFAULT} from "react-native-maps"
 import MapViewDirections from "react-native-maps-directions"
-
+let MapView;
+if (Platform.OS !== 'web') {
+    MapView = require('react-native-maps').default;
+  } else {
+    MapView = () => null; 
+  }
+  
 const Map = ()=>{
     const {data:drivers, loading,error} = useFetch<Driver[]>("/(api)/driver")
     const {
