@@ -1,13 +1,12 @@
 import { Stripe } from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRETE_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request) {
-  try{
   const body = await request.json();
-  const { name, email, amount } = body;
+  const { name, email, amount,payment_method_id } = body;
 
-  if (!name || !email || !amount) {
+  if (!name || !email || !amount || !payment_method_id) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
     });
@@ -38,6 +37,8 @@ export async function POST(request: Request) {
     amount: parseInt(amount) * 100,
     currency: "usd",
     customer: customer.id,
+    payment_method:payment_method_id,
+    confirm:true,
     automatic_payment_methods: {
       enabled: true,
       allow_redirects: "never",
@@ -51,7 +52,4 @@ export async function POST(request: Request) {
       customer: customer.id,
     }),
   );
-}catch(error){
-  console.log(error);
-}
 }

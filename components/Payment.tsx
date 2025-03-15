@@ -1,5 +1,4 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { useStripe } from "@stripe/stripe-react-native";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Image, Text, View } from "react-native";
@@ -11,14 +10,7 @@ import { fetchAPI } from "@/app/fetch";
 import { useLocationStore } from "@/store";
 import { PaymentProps } from "@/types/type";
 
-const Payment = ({
-  fullName,
-  email,
-  amount,
-  driverId,
-  rideTime,
-}: PaymentProps) => {
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+const Payment = ({ fullName, email, amount, driverId, rideTime }: PaymentProps) => {
   const {
     userAddress,
     userLongitude,
@@ -31,109 +23,39 @@ const Payment = ({
   const { userId } = useAuth();
   const [success, setSuccess] = useState<boolean>(false);
 
-  const openPaymentSheet = async () => {
-    await initializePaymentSheet();
+  const handlePayment = async () => {
+    try {
+      // Create the ride immediately with "paid" status
+      await fetchAPI("/(api)/ride/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin_address: userAddress,
+          destination_address: destinationAddress,
+          origin_latitude: userLatitude,
+          origin_longitude: userLongitude,
+          destination_latitude: destinationLatitude,
+          destination_longitude: destinationLongitude,
+          ride_time: rideTime.toFixed(0),
+          fare_price: parseInt(amount) * 100,
+          payment_status: "paid", 
+          driver_id: driverId,
+          user_id: userId,
+        }),
+      });
 
-    const { error } = await presentPaymentSheet();
-
-    if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
-    } else {
       setSuccess(true);
-    }
-  };
-
-  const initializePaymentSheet = async () => {
-    const { error } = await initPaymentSheet({
-      merchantDisplayName: "Ryde, Inc.",
-      intentConfiguration: {
-        mode: {
-          amount: parseInt(amount) * 100,
-          currencyCode: "usd",
-        },
-        confirmHandler: async (
-          paymentMethod,
-          shouldSavePaymentMethod,
-          intentCreationCallback
-        ) => {
-          const { paymentIntent, customer } = await fetchAPI(
-            "/(api)/(stripe)/create",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                name: fullName || email.split("@")[0],
-                email: email,
-                amount: amount,
-                paymentMethodId: paymentMethod.id,
-              }),
-            }
-          );
-
-          if (paymentIntent.client_secret) {
-            const { result } = await fetchAPI("/(api)/(stripe)/pay", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                payment_method_id: paymentMethod.id,
-                payment_intent_id: paymentIntent.id,
-                customer_id: customer,
-                client_secret: paymentIntent.client_secret,
-              }),
-            });
-
-            if (result.client_secret) {
-              await fetchAPI("/(api)/ride/create", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  origin_address: userAddress,
-                  destination_address: destinationAddress,
-                  origin_latitude: userLatitude,
-                  origin_longitude: userLongitude,
-                  destination_latitude: destinationLatitude,
-                  destination_longitude: destinationLongitude,
-                  ride_time: rideTime.toFixed(0),
-                  fare_price: parseInt(amount) * 100,
-                  payment_status: "paid",
-                  driver_id: driverId,
-                  user_id: userId,
-                }),
-              });
-
-              intentCreationCallback({
-                clientSecret: result.client_secret,
-              });
-            }
-          }
-        },
-      },
-      returnURL: "myapp://book-ride",
-    });
-
-    if (!error) {
-      // setLoading(true);
+    } catch (error) {
+      console.error("Payment Error:", error);
+      Alert.alert("Payment Failed", "Something went wrong. Please try again.");
     }
   };
 
   return (
     <>
-      <CustomButton
-        title="Confirm Ride"
-        style={{ marginVertical: 10 }}
-        onPress={openPaymentSheet}
-      />
+      <CustomButton title="Confirm Ride" style={{ marginVertical: 10 }} onPress={handlePayment} />
 
-      <ReactNativeModal
-        isVisible={success}
-        onBackdropPress={() => setSuccess(false)}
-      >
+      <ReactNativeModal isVisible={success} onBackdropPress={() => setSuccess(false)}>
         <View
           style={{
             display: "flex",
@@ -145,10 +67,7 @@ const Payment = ({
             borderRadius: 15,
           }}
         >
-          <Image
-            source={images.check}
-            style={{ width: 112, height: 112, marginTop: 20 }}
-          />
+          <Image source={images.check} style={{ width: 112, height: 112, marginTop: 20 }} />
 
           <Text
             style={{
@@ -158,7 +77,7 @@ const Payment = ({
               marginTop: 20,
             }}
           >
-            Booking placed successfully
+            Payment Successful 🎉
           </Text>
 
           <Text
@@ -170,8 +89,7 @@ const Payment = ({
               fontWeight: "400",
             }}
           >
-            Thank you for your booking. Your reservation has been successfully
-            placed. Please proceed with your trip.
+            Your payment has been processed successfully. Enjoy your ride!
           </Text>
 
           <CustomButton
@@ -180,7 +98,7 @@ const Payment = ({
               setSuccess(false);
               router.push("/(root)/(tabs)/home");
             }}
-            style={{ marginBottom: 5 }}
+            style={{ marginTop: 20, width:350, }}
           />
         </View>
       </ReactNativeModal>

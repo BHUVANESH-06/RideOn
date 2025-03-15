@@ -17,6 +17,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location"
+import { useFetch } from "@/app/fetch";
+
 const recentRides = [
   {
     ride_id: "1",
@@ -126,7 +128,9 @@ const recentRides = [
 export default function Home() {
 
   const {setUserLocation,setDestinationLocation} = useLocationStore();
+  const { user } = useUser();
   const [hasPermissions,setHasPermissions] = useState(false);
+  const {data:recentRides, loading} = useFetch(`/(api)/ride/${user?.id}`);
 
   useEffect(()=>{
     const requestLocation = async ()=>{
@@ -150,10 +154,8 @@ export default function Home() {
     requestLocation()
   },[])
 
-  const { user } = useUser();
   const { session } = useSession();
   const router = useRouter();
-  const loading = true;
 
   const handleSignOut = async () => {
     if (session) {

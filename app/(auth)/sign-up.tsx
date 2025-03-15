@@ -8,16 +8,18 @@ import {
   Button,
 } from "react-native";
 import { Alert } from "react-native";
+import * as AuthSession from 'expo-auth-session'
 import ReactNativeModal from "react-native-modal";
 import { icons, images } from "@/constants";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, useNavigation } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import { useRouter } from "expo-router";
-import { useSignUp } from "@clerk/clerk-expo";
+import { useOAuth, useSignUp, useSSO } from "@clerk/clerk-expo";
 import { fetchAPI } from "../fetch";
+import { googleOAuth } from "@/cache";
 
 const SignUp = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -95,7 +97,24 @@ const SignUp = () => {
     }
   };
 
-  const onLoginPress = async () => {};
+  const {startOAuthFlow} = useOAuth({
+    strategy: "oauth_google"
+  })
+
+  const onLoginPress = useCallback(async () => {
+    try {
+        const result = await googleOAuth(startOAuthFlow);
+        if(result.code==="session_exists" || result.code==="success"){
+          Alert.alert("Success","Session Exists. Redirecting to home page");
+          router.push('/(root)/(tabs)/home');
+        }
+        Alert.alert(result.success?'Success':"Error",result.message)
+    } catch (err) {
+      // See https://clerk.com/docs/custom-flows/error-handling
+      // for more info on error handling
+      console.error(JSON.stringify(err, null, 2))
+    }
+  }, [])
   return (
     <ScrollView
       contentContainerStyle={styles.signupContainer}

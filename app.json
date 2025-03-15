@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.bhuvaneshg.RideOn"
     },
     "web": {
       "bundler": "metro",
@@ -39,9 +40,16 @@
         }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://rideon.com/"
+      },
+      "eas": {
+        "projectId": "1ef51727-fad1-4cbd-bc67-0966178c05ce"
+      }
     }
   }
 }
